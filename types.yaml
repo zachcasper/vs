@@ -1,0 +1,120 @@
+# This will be namespace in the future
+name: Radius.Resources
+types:
+  # This is the schema for the webService resource type. It is implemented by the /recipes/kubernetes/webServices.bicep recipe.
+  # The schema is highly influenced by a podSpec. This is intensional in order to make it easy to pass the properties to the kubernetes provider.
+  # For example, in the recipe, you can see how it is easy to pass in the container property without having to parse each nested property. 
+  webService:
+    # This will not be required in the future since it is the default.
+    capabilities: ["SupportsRecipes"]
+    apiVersions:
+      '2023-10-01-preview':
+        schema: 
+          type: object
+          properties:
+            environment:
+              type: string
+              description: "Required: The Radius environment; typically set by the rad CLI"
+            application:
+              type: string
+              description: "Optional: The application which the resource is associated with"
+            ingress:
+              type: boolean
+              description: "Optional: When true, provisions an L7 ingress gateway mapped to the port named http (MUST use http for the port name)"
+            cache:
+              type: boolean
+              description: "Optional: When true, provisions a Redis cache on the cluster"
+            container:
+              type: object
+              properties:
+                image:
+                  type: string
+                  description: "Required: The container image"
+                ports:
+                  type: object
+                  properties:
+                    containerPort:
+                      type: string
+                      description: "Required: The port the container is listening on"
+                    protocol:
+                      type: string
+                      description: "Optional: The protocol the container listening on; defaults to tcp"
+                resources:
+                  type: object
+                  description: "Optional: The CPU and memory resources allocated to the container"
+                  properties:
+                    limits:
+                      type: object
+                      properties:
+                        cpu:
+                          type: integer
+                          description: "Optional: The maximum number of vCPU allocated to the container (0.5, 1, 2, etc.)"
+                        memory:
+                          type: string
+                          description: "Optional: The maximum amount of memory allocated to the container (128Mi, 1Gi, etc.)"
+                    requests:
+                      type: object
+                      properties:
+                        cpu:
+                          type: integer
+                          description: "Optional: The minimum number of vCPU allocated to the container (0.5, 1, 2, etc.)"
+                        memory:
+                          type: string
+                          description: "Optional: The minimum amount of memory allocated to the container (128Mi, 1Gi, etc.)"
+                env:
+                  type: object
+                  description: "Optional: Environment variables injected into the application container"
+                  properties:
+                    value:
+                      type: string
+              required:
+              - image
+              - ports
+          required:
+          - environment
+          - container
+  # This is the schema for the mySQL resource type. It is very simple and offers developers two properties: database, and size. 
+  # It is implemented by the /recipes/<platform>/mysql/main.tf recipe.
+  mySQL:
+    capabilities: ["SupportsRecipes"]
+    apiVersions:
+      '2023-10-01-preview':
+        schema: 
+          type: object
+          properties:
+            environment:
+              type: string
+              description: "Required: The Radius environment; typically set by the rad CLI"
+            application:
+              type: string
+              description: "Optional: The application which the resource is associated with"
+            database:
+              type: string
+              description: "Required: The name of the database"
+            size:
+              type: string
+              description: "Optional: The size of the database"
+              # enum values are not enforced today.
+              enum:
+              - S
+              - M
+              - L
+              - XL
+            status:
+              type: object
+              properties:
+                binding:
+                  type: object
+                  properties:
+                    host:
+                      type: string
+                      description: "Read only: The host name of the database server"
+                    port:
+                      type: string
+                      description: "Read only: The port number of the database server"
+                    username:
+                      type: string
+                      description: "Read only: The username for the database"
+                    password:
+                      type: string
+                      description: "Read only: The password for the database"
