@@ -10,13 +10,11 @@ resource wordpress 'Applications.Core/applications@2023-10-01-preview' = {
   }
 }
 
-resource frontend 'Radius.Resources/webService@2023-10-01-preview' = {
+resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
   name: 'frontend'
   properties: {
     application: wordpress.id
     environment: environment
-    ingress: true
-    cache: false
     container: {
       image: 'wordpress:6.2.1-apache'
       ports: {
@@ -34,16 +32,6 @@ resource frontend 'Radius.Resources/webService@2023-10-01-preview' = {
         }
         WORDPRESS_DB_PASSWORD: {
           value: mysql.properties.status.binding.password
-        }
-      }
-      resources: {
-        requests: {
-          cpu: 1
-          memory: '256Mi'
-        }
-        limits: {
-          cpu: 1
-          memory: '1Gi'
         }
       }
     }
