@@ -166,7 +166,7 @@ Use the same kubectl port-forward command as before, but change the namespace fr
 There may be something missing in the Terraform configuration for RDS because in testing, we got "Error establishing a database connection." But the RDS database is being property provisioned.
 
 ### Examine the resources deployed
-Use the same `rap app graph -a wordpress` command and confirm that Radius has created the MySQL database on AWS.
+Use the same `rap app graph --application wordpress` command and confirm that Radius has created the MySQL database on AWS.
 
 As with before, you will not see the RDS database in the application graph. 
 
@@ -208,4 +208,8 @@ rad workspace delete test
 Optionally, delete the postgreSQL resource type.
 ```
 rad resource-type delete Radius.Resources/mySQL
+```
+Optionally, uninstall Radius.
+```
+rad uninstall kubernetes
 ```
