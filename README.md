@@ -76,35 +76,35 @@ rad environment update test --aws-region $AWS_REGION --aws-account-id $AWS_ACCOU
 ```
 rad resource-type create mySQL -f types.yaml
 ```
-## Register the PostgreSQL recipe
+## Register the MySQL recipe
 
-Commit the recipes directory into a Git repository. This directory has two Terraform recipes for deploying a PostgreSQL database, one for Kubernetes and one for AWS. The Kubernetes recipe will be used for the dev environment while the Azure recipe will be used for the test environment.
+Commit the recipes directory into a Git repository. This directory has two Terraform recipes for deploying a MySQL database, one for Kubernetes and one for AWS. The Kubernetes recipe will be used for the dev environment while the Azure recipe will be used for the test environment.
 
 ### Dev environment
 
 Register the Kubernetes recipe in the dev environment.
 ```
 rad recipe register default \
-  --workspace dev \
   --resource-type Radius.Resources/mySQL \
   --template-kind terraform \
-  --template-path git::https://github.com/zachcasper/vs.git//recipes/kubernetes/mysql
+  --template-path git::https://github.com/zachcasper/vs.git//recipes/kubernetes/mysql \
+  --workspace dev
 ```
 Some explaination of this command is warranted. 
 
 * `rad recipe register` – This is creating a pointer to a Terraform configuration or a Bicep template which will be called when a resource is created in Radius.
-* `rad recipe register default` – Each recipe has a name but you should use default. This is legacy functionality which will be retired. With older resource types which are built into Radius such as Redis and MongoDB, developers could specify a named recipe to be used to deploy the resource. The newer resource types such as the PostgreSQL resource type we are defining here will not allow developers to specify a recipe name. 
-* `--template-path git::https://github.com/zachcasper/vs.git//recipes/kubernetes/postgresql` – This is the path to the Terraform configuration. Radius uses the generic Git module source as [documented here](https://developer.hashicorp.com/terraform/language/modules/sources#generic-git-repository). In the example here, the Git repository on GitHub is UBS. The `//` indicates a sub-module or a sub-directory and postgresql is the directory containing the main.tf file.
+* `rad recipe register default` – Each recipe has a name but you should use default. This is legacy functionality which will be retired. With older resource types which are built into Radius such as Redis and MongoDB, developers could specify a named recipe to be used to deploy the resource. The newer resource types such as the MySQL resource type we are defining here will not allow developers to specify a recipe name. 
+* `--template-path git::https://github.com/zachcasper/vs.git//recipes/kubernetes/mysql` – This is the path to the Terraform configuration. Radius uses the generic Git module source as [documented here](https://developer.hashicorp.com/terraform/language/modules/sources#generic-git-repository). In the example here, the Git repository on GitHub is UBS. The `//` indicates a sub-module or a sub-directory and MySQL is the directory containing the main.tf file.
 
 ### Test environment
 
 Register the AWS recipe in the test environment.
 ```
 rad recipe register default \
-  --workspace test \
-  --resource-type Radius.Resources/postgreSQL \
+  --resource-type Radius.Resources/mySQL \
   --template-kind terraform \
   --template-path git::https://github.com/zachcasper/vs.git//recipes/aws/mysql \
+  --workspace test
 ```
 
 ## Create the Bicep extension
@@ -138,9 +138,18 @@ Open http://localhost:8080 in your browser. You should see the Wordpress languag
 ### Examine the resources deployed
 Run the rap app graph command.
 ```
-rad app graph -a wordpress
+rad app graph --application wordpress
 ```
 You will see that a Kubernetes Deployment, Service, ServiceAccount, Role, and RoleBinding were created for the Wordpress container. In the very near future you will also see the Kubernetes resources for the MySQL database. This doesn't work quite yet for custom resource types like MySQL.
+
+You can see the database by listing MySQL resources.
+```
+rad resource list Radius.Resources/mySQL
+```
+Examine the mysql resource in detail.
+```
+rad resource show Radius.Resources/mySQL mysql -o json
+```
 
 ## Deploy the Wordpress application to test
 Switch to the test enviornment
@@ -154,14 +163,27 @@ rad deploy wordpress.bicep
 ### Port forward and open the application
 Use the same kubectl port-forward command as before, but change the namespace from dev-wordpress to test-wordpress. 
 
+There may be something missing in the Terraform configuration for RDS because in testing, we got "Error establishing a database connection." But the RDS database is being property provisioned.
+
 ### Examine the resources deployed
 Use the same `rap app graph -a wordpress` command and confirm that Radius has created the MySQL database on AWS.
+
+As with before, you will not see the RDS database in the application graph. 
+
+You can see the database by listing MySQL resources.
+```
+rad resource list Radius.Resources/mySQL
+```
+Examine the mysql resource in detail.
+```
+rad resource show Radius.Resources/mySQL mysql -o json
+```
 
 ## Clean up
 Delete both applications.
 ```
-rad app delete --workspace dev
-rad app delete --workspace test
+rad app delete wordpress --workspace dev
+rad app delete wordpress --workspace test
 ```
 Verify the pods are terminated on the Kubernetes cluster.
 ```
@@ -185,5 +207,5 @@ rad workspace delete test
 ```
 Optionally, delete the postgreSQL resource type.
 ```
-rad delete resource-type Radius.Resources/mySQL
+rad resource-type delete Radius.Resources/mySQL
 ```
